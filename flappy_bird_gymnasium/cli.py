@@ -31,8 +31,16 @@ import time
 import gymnasium
 import pygame
 
+import sys
+from pathlib import Path
+
+# Add the upper directory to sys.path to make the sibling module importable
+upper_dir = str(Path(__file__).resolve().parent.parent)
+sys.path.append(upper_dir)
+import tests
+
 import flappy_bird_gymnasium
-from tests.test_dqn import play as dqn_agent_env
+# from tests.test_dqn import play as dqn_agent_env
 from tests.test_human import play as human_agent_env
 from tests.test_random import play as random_agent_env
 
