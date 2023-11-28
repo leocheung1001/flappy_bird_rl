@@ -54,17 +54,21 @@ def play():
                 event.key == pygame.K_SPACE or event.key == pygame.K_UP
             ):
                 action = 1
+            if event.type == pygame.KEYDOWN and (
+                event.key == pygame.K_RETURN
+            ):
+                print("Hello! This is a return")
 
         # Processing:
         obs, _, done, _, info = env.step(action)
         video_buffer.append(obs)
 
         steps += 1
-        print(
-            f"Obs: {obs}\n"
-            f"Action: {action}\n"
-            f"Score: {info['score']}\n Steps: {steps}\n"
-        )
+        # print(
+        #     f"Obs: {obs}\n"
+        #     f"Action: {action}\n"
+        #     f"Score: {info['score']}\n Steps: {steps}\n"
+        # )
 
         if done:
             break
@@ -89,6 +93,21 @@ def play():
 
     env.close()
 
+
+    while True:
+        # Getting action:
+        action = 0
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN and (
+                event.key == pygame.K_RETURN
+            ):
+                print("Restartng the game!")
+                play()
+            if event.type == pygame.KEYDOWN and (
+                event.key == pygame.K_ESCAPE
+            ):
+                break
+    
 
 if __name__ == "__main__":
     play()
