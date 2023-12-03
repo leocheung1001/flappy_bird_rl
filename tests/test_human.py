@@ -37,7 +37,7 @@ import flappy_bird_gymnasium
 
 def play():
     env = gymnasium.make(
-        "FlappyBird-v0", audio_on=True, render_mode="human", use_lidar=True
+        "FlappyBird-v0", audio_on=True, render_mode="human", use_lidar=False
     )
 
     steps = 0
