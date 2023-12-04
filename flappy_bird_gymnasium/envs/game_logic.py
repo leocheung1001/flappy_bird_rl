@@ -266,7 +266,8 @@ class FlappyBirdLogic:
         Returns:
             `True` if the player is alive and `False` otherwise.
         """
-        reward = 0.001  # reward for staying alive
+        reward = 0.0001  # reward for staying alive
+        # reward = 0  # reward for staying alive
         terminal = False
 
         self.sound_cache = None
@@ -282,7 +283,8 @@ class FlappyBirdLogic:
             pipe_mid_pos = pipe["x"] + PIPE_WIDTH / 2
             if pipe_mid_pos <= player_mid_pos < pipe_mid_pos + 4:
                 self.score += 1
-                reward = 1  # reward for passed pipe
+                reward = 10  # reward for passed pipe
+                # reward = 0  # reward for passed pipe
                 self.sound_cache = "point"
 
         # player_index base_x change
