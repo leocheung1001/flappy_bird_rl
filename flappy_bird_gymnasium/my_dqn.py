@@ -10,7 +10,7 @@ class DQN(tf.keras.Model):
     def __init__(self, state_dim, action_dim):
         super(DQN, self).__init__()
         self.fc1 = tf.keras.layers.Dense(512, activation='relu')
-        self.fc2 = tf.keras.layers.Dense(256, activation='relu')
+        self.fc2 = tf.keras.layers.Dense(128, activation='relu')
         self.fc3 = tf.keras.layers.Dense(128, activation='relu')
         self.fc4 = tf.keras.layers.Dense(32, activation='relu')
         self.fc5 = tf.keras.layers.Dense(action_dim, activation=None)
@@ -51,7 +51,7 @@ def train():
     batch_size = 128
     gamma = 0.99
     epsilon = 1.0
-    epsilon_min = 0.01
+    epsilon_min = 0.05
     epsilon_decay = 0.995
     mem_size = 10000
 
@@ -130,9 +130,10 @@ def play(epoch=10, audio_on=True, render_mode="human", use_lidar=False):
     target_net(dummy_input)
     target_net.load_weights('tf_target_dqn.h5')
 
-    for _ in range(epoch):
+    for i in range(epoch):
         state, _ = env.reset()
         state = np.expand_dims(state, axis=0)
+        steps = 0
         while True:
             action = target_net.get_action(state)
             action = np.array(action, copy=False, dtype=env.env.action_space.dtype)
@@ -141,8 +142,9 @@ def play(epoch=10, audio_on=True, render_mode="human", use_lidar=False):
 
             state = np.expand_dims(next_state, axis=0)
             # print(f"Obs: {state}\n" f"Action: {action}\n" f"Score: {info['score']}\n")
-
+            steps += 1
             if done:
+                print(f"Episode: {i} \t Steps: {steps}")
                 break
 
     env.close()
