@@ -266,7 +266,7 @@ class FlappyBirdLogic:
         Returns:
             `True` if the player is alive and `False` otherwise.
         """
-        reward = 0.0001  # reward for staying alive
+        reward = 1  # reward for staying alive
         # reward = 0  # reward for staying alive
         terminal = False
 
@@ -283,7 +283,7 @@ class FlappyBirdLogic:
             pipe_mid_pos = pipe["x"] + PIPE_WIDTH / 2
             if pipe_mid_pos <= player_mid_pos < pipe_mid_pos + 4:
                 self.score += 1
-                reward = 10  # reward for passed pipe
+                reward = 100  # reward for passed pipe
                 # reward = 0  # reward for passed pipe
                 self.sound_cache = "point"
 
@@ -315,7 +315,7 @@ class FlappyBirdLogic:
 
         # agent touch the top of the screen as punishment
         if self.player_y < 0:
-            reward = -1000
+            reward = -100000
             terminal = True
             self.player_vel_y = 0
 
@@ -335,7 +335,7 @@ class FlappyBirdLogic:
         # check for crash
         if self.check_crash():
             self.sound_cache = "hit"
-            reward = -1000  # reward for dying
+            reward = -100000  # reward for dying
             terminal = True
             self.player_vel_y = 0
 

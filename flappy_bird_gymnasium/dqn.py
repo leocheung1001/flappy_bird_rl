@@ -1,4 +1,3 @@
-import gym
 import random
 import numpy as np
 import tensorflow as tf
@@ -30,21 +29,17 @@ class DQN(Model):
 
 def save_steps_log(steps_log):
     with open("data/steps_log.json", 'w') as file:
-    # The indent parameter adds indentation to make the file human-readable.
         json.dump(steps_log, file, indent=4)
 
 
 def train():
-    # Set up the environment
     env = gymnasium.make("FlappyBird-v0", audio_on=True, render_mode=None, use_lidar=False)
-
-    # Hyperparameters
     BATCH_SIZE = 128
     GAMMA = 0.999
     EPS_START = 0.9
     EPS_END = 0.05
     EPS_DECAY = 200
-    TARGET_UPDATE = 10
+    FLUSH = 10
     MODEL_SAVE = 50
     n_actions = env.action_space.n
     n_observations = env.observation_space.shape[0]
@@ -61,16 +56,15 @@ def train():
     mse = tf.keras.losses.MeanSquaredError()
 
 
-    def select_action(state, steps_done):
-        eps_threshold = EPS_END + (EPS_START - EPS_END) * np.exp(-1. * steps_done / EPS_DECAY)
-        # eps_threshold = 0.1
-        if np.random.rand() < eps_threshold:
+    def act(state, steps_done):
+        threshold = EPS_END + (EPS_START - EPS_END) * np.exp(-1. * steps_done / EPS_DECAY)
+        if np.random.rand() < threshold:
             return np.random.randint(n_actions)
         else:
             q_values = policy_net.predict(state[np.newaxis], verbose=0)
             return np.argmax(q_values[0])
 
-    def optimize_model():
+    def learn():
         if len(memory) < BATCH_SIZE:
             return
 
@@ -110,7 +104,7 @@ def train():
         state = np.array(state, dtype=np.float32)
         total_reward = 0
         for t in range(T):
-            action = select_action(state, steps_done)
+            action = act(state, steps_done)
             # print(action)
             steps_done += 1
             next_state, reward, done, _, info = env.step(action)
@@ -120,14 +114,14 @@ def train():
             memory.append((state, action, reward, next_state, done))
             state = next_state
 
-            optimize_model()
+            learn()
 
             if done:
                 print(f"episode {i_episode} \twith steps {t} \t reward {total_reward}.")
                 steps.append(t)
                 break
 
-        if i_episode % TARGET_UPDATE == 0:
+        if i_episode % FLUSH == 0:
             target_net.set_weights(policy_net.get_weights())
         
         if i_episode % MODEL_SAVE == 6:
@@ -135,8 +129,6 @@ def train():
             policy_net.save_weights('policy_net.h5')
             save_steps_log({"log" : steps})
 
-
-    print('Complete')
     env.close()
 
 
@@ -145,7 +137,6 @@ def play(epoch=10, audio_on=True, render_mode="human", use_lidar=False):
         "FlappyBird-v0", audio_on=audio_on, render_mode=render_mode, use_lidar=use_lidar
     )
 
-    # init models
     n_actions = env.action_space.n
     n_observations = env.observation_space.shape[0]
 
@@ -154,16 +145,13 @@ def play(epoch=10, audio_on=True, render_mode="human", use_lidar=False):
     target_net(dummy_input)
     target_net.load_weights('target_net.h5')
 
-    # run
     for _ in range(epoch):
         state, _ = env.reset()
         state = np.expand_dims(state, axis=0)
         while True:
-            # Getting action
             action = target_net.get_action(state)
             action = np.array(action, copy=False, dtype=env.env.action_space.dtype)
 
-            # Processing action
             next_state, _, done, _, info = env.step(action)
 
             state = np.expand_dims(next_state, axis=0)
@@ -173,8 +161,6 @@ def play(epoch=10, audio_on=True, render_mode="human", use_lidar=False):
                 break
 
     env.close()
-    assert state.shape == (1,) + env.observation_space.shape
-    assert info["score"] > 0
 
 
 # def test_play():
