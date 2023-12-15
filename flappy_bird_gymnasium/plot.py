@@ -17,19 +17,36 @@ def read_json():
 
 
 if __name__ == "__main__":
-    episodes, steps = read_json()
-    # nums = list(range(len(steps)))
-    plt.plot(episodes[:3000], steps[:3000])
+    # episodes, steps = read_json()
+    # # nums = list(range(len(steps)))
+    # plt.plot(episodes[:3000], steps[:3000])
 
-    # Adding title
-    # plt.title('Training episodes for Double DQN v.s. Survival time', fontsize=18)
+    # # Adding title
+    # # plt.title('Training episodes for Double DQN v.s. Survival time', fontsize=18)
 
-    # Adding labels
-    plt.tick_params(axis='both', which='major', labelsize=14)
-    plt.xlabel("Number of episodes",  fontsize=18)
-    plt.ylabel('Steps',  fontsize=18)
+    # # Adding labels
+    # plt.tick_params(axis='both', which='major', labelsize=14)
+    # plt.xlabel("Number of episodes",  fontsize=18)
+    # plt.ylabel('Steps',  fontsize=18)
 
-    # Display the plot
+    # # Display the plot
+    # plt.tight_layout()
+    # plt.show()
+
+    # Sample data
+    categories = ['Double DQN', 'Dueling DQN', 'DQN with PER']
+    values = [93, 87, 86]
+
+    # Creating the bar graph
+    plt.bar(categories, values)
+
+    # Adding title and labels
+    plt.tick_params(axis='both', which='major', labelsize=16)
+    plt.title('Game Pass Rate v.s. DQN algroithms', fontsize=20)
+    plt.xlabel('DQN algroithms',  fontsize=18)
+    plt.ylabel('Rate in Percentile',  fontsize=18)
+
+    # Show the plot
     plt.tight_layout()
     plt.show()
 

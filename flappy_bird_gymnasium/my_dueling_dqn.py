@@ -12,97 +12,70 @@ import json
 import argparse
 
 
-class DQNPER(tf.keras.Model):
+class DuelingDQN(tf.keras.Model):
     def __init__(self, state_dim, action_dim):
-        super(DQNPER, self).__init__()
+        super(DuelingDQN, self).__init__()
         self.fc1 = tf.keras.layers.Dense(512, activation='relu')
         self.fc2 = tf.keras.layers.Dense(128, activation='relu')
-        self.fc3 = tf.keras.layers.Dense(128, activation='relu')
-        self.fc4 = tf.keras.layers.Dense(32, activation='relu')
-        self.fc5 = tf.keras.layers.Dense(action_dim, activation=None)
+        # self.fc3 = tf.keras.layers.Dense(128, activation='relu')
+        # self.fc4 = tf.keras.layers.Dense(32, activation='relu')
+
+        self.value_fc1 = tf.keras.layers.Dense(128, activation='relu')
+        self.value_fc2 = tf.keras.layers.Dense(32, activation='relu')
+        self.value_final = tf.keras.layers.Dense(1, activation=None)
+
+        self.advantage_fc1 = tf.keras.layers.Dense(128, activation='relu')
+        self.advantage_fc2 = tf.keras.layers.Dense(32, activation='relu')
+        self.advantage_final = tf.keras.layers.Dense(action_dim, activation=None)
+        
+        # # NOTE: not used in dueling
+        # self.fc4 = tf.keras.layers.Dense(32, activation='relu')
+        # self.fc5 = tf.keras.layers.Dense(action_dim, activation=None)
 
     def call(self, x):
         x = self.fc1(x)
         x = self.fc2(x)
-        x = self.fc3(x)
-        x = self.fc4(x)
-        x = self.fc5(x)
-        return x
+
+        value = self.value_fc1(x)
+        value = self.value_fc2(value)
+        value = self.value_final(value)
+
+        advantage = self.advantage_fc1(x)
+        advantage = self.advantage_fc2(advantage)
+        advantage = self.advantage_final(advantage)
+        # print(advantage)
+
+        advantage_mean = tf.reduce_mean(advantage, axis=-1, keepdims=True)
+        output = value + (advantage - advantage_mean)
+        # print(output.shape)
+        return output
 
     def get_action(self, state):
         q_values = self(state)
+        # print(q_values)
         return np.argmax(q_values[0])
 
 
-class PrioritizedMemory():
-    def __init__(self, capacity, alpha=0.7):
-        # roll back to list for better control
-        self.memory = []
-        self.priorities = np.zeros((capacity,), dtype=np.float32)
-        self.capacity = capacity
-        self.alpha = alpha
-        self.cur_pos = 0
+
+class Memory():
+    def __init__(self, capacity):
+        self.memory = deque(maxlen=capacity)
 
     def get_len(self):
         return len(self.memory)
 
-    def is_full_capacity(self):
-        return len(self.memory) == self.capacity
-
-    # TODO: YONG NEEDS REFINEMENT
     def append_memory(self, state, action, reward, next_state, done):
-        priority = 1.0
-        if len(self.memory) > 0:
-            priority = self.priorities.max()
+        self.memory.append((state, action, reward, next_state, done))
 
-        if self.is_full_capacity():
-            self.memory[self.cur_pos] = (state, action, reward, next_state, done)
-        else:
-            self.memory.append((state, action, reward, next_state, done))
-        
-        self.priorities[self.cur_pos] = priority
-        # move to the next
-        self.cur_pos = (self.cur_pos + 1) % self.capacity
-        
-
-
-    def sample(self, batch_size, beta=0.5):
-        probs = self.priorities[:self.get_len()] ** self.alpha
-        probs = probs / probs.sum()
-
-        ids = np.random.choice(len(self.memory), batch_size, p=probs)
-        samples = [self.memory[id_] for id_ in ids]
+    def sample(self, batch_size):
+        sample_size = min(batch_size, len(self.memory))
+        samples = random.sample(self.memory, sample_size)
         states, actions, rewards, next_states, dones = zip(*samples)
-
-        weights = (self.get_len() * probs[ids]) ** (-beta)
-        weights /= weights.max()
-        # weights = np.array(weights, dtype=np.float32)
-
-        return ids, weights, np.array(states), np.array(actions), np.array(rewards), np.array(next_states), np.array(dones)
-
-    def update_priorities(self, idxs, priorities):
-        self.priorities[idxs] = priorities
-
-
-# class Memory():
-#     def __init__(self, capacity):
-#         self.memory = deque(maxlen=capacity)
-
-#     def get_len(self):
-#         return len(self.memory)
-
-#     def append_memory(self, state, action, reward, next_state, done):
-#         self.memory.append((state, action, reward, next_state, done))
-
-#     def sample(self, batch_size):
-#         sample_size = min(batch_size, len(self.memory))
-#         samples = random.sample(self.memory, sample_size)
-#         states, actions, rewards, next_states, dones = zip(*samples)
-#         return np.array(states), np.array(actions), np.array(rewards), np.array(next_states), np.array(dones)
+        return np.array(states), np.array(actions), np.array(rewards), np.array(next_states), np.array(dones)
 
 
 def save_steps_log(steps_log):
-    with open("data/steps_log_per.json", 'w') as file:
+    with open("data/steps_log_dueling.json", 'w') as file:
         json.dump(steps_log, file, indent=4)
 
 
@@ -118,20 +91,19 @@ def train():
     epsilon_min = 0.03
     epsilon_decay = 0.995
     mem_size = 10000
-    epsilon_per = 1e-6
 
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
 
     sample_input = np.random.random((1, state_dim))
-    policy_model = DQNPER(state_dim, action_dim)
-    target_model = DQNPER(state_dim, action_dim)
+    policy_model = DuelingDQN(state_dim, action_dim)
+    target_model = DuelingDQN(state_dim, action_dim)
     policy_model(sample_input) 
     target_model(sample_input) 
     target_model.set_weights(policy_model.get_weights())
 
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
-    memory = PrioritizedMemory(mem_size)
+    memory = Memory(mem_size)
 
     for i_episode in range(num_episodes):
         state, _ = env.reset()
@@ -151,7 +123,7 @@ def train():
             memory.append_memory(state, action, reward, next_state, done)
 
             if memory.get_len() > batch_size and i % 5 == 0:
-                ids, weights, states, actions, rewards, next_states, dones = memory.sample(batch_size)
+                states, actions, rewards, next_states, dones = memory.sample(batch_size)
                 states = tf.squeeze(states, axis=1)
                 # print(f"states.shape {states.shape}")
                 # print(f"next_states.shape {next_states.shape}")
@@ -160,14 +132,9 @@ def train():
                     q_values = tf.reduce_sum(tf.multiply(q_values, tf.one_hot(actions, action_dim)), axis=1)
                     next_max_q_values = tf.reduce_max(target_model(next_states), axis=1)
                     y = rewards + gamma * next_max_q_values * (1 - dones)
-                    # loss = tf.keras.losses.mean_squared_error(y, q_values)
-
-                    temp_diff = y - q_values
-                    loss = tf.reduce_mean(weights * tf.square(temp_diff))
-
+                    loss = tf.keras.losses.mean_squared_error(y, q_values)
                 gradients = tape.gradient(loss, policy_model.trainable_variables)
                 optimizer.apply_gradients(zip(gradients, policy_model.trainable_variables))
-                memory.update_priorities(ids, np.abs(temp_diff.numpy()) + epsilon_per)
 
             if done:
                 if epsilon > epsilon_min:
@@ -186,7 +153,7 @@ def train():
             episodes_ids.append(i_episode)
 
         if i_episode % 100 == 0:
-            target_model.save_weights('tf_target_per.h5')
+            target_model.save_weights('tf_target_dueling.h5')
             save_steps_log({"episodes_ids": episodes_ids, "num_steps" : steps_log})
 
     env.close()
@@ -200,11 +167,12 @@ def play(epoch=100, audio_on=True, render_mode=None, use_lidar=False):
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
 
-    target_net = DQNPER(state_dim, action_dim)
+    target_net = DuelingDQN(state_dim, action_dim)
     dummy_input = np.random.random((1, state_dim))
     target_net(dummy_input)
-    target_net.load_weights('tf_target_per.h5')
+    target_net.load_weights('tf_target_dueling.h5')
     success = 0
+
     for i in range(epoch):
         state, _ = env.reset()
         state = np.expand_dims(state, axis=0)
@@ -236,11 +204,11 @@ if __name__ == "__main__":
 
     if args.train:
         print("*" * 50)
-        print("Traininig the DQN with PER!")
+        print("Traininig the Dueling DQN!")
         print("*" * 50)
         train()
     else:
         print("*" * 50)
-        print("Playing the DQN with PER!")
+        print("Playing the Dueling DQN!")
         print("*" * 50)
         play()
