@@ -56,15 +56,13 @@ class PrioritizedMemory():
             priority = self.priorities.max()
 
         if self.is_full_capacity():
-            self.memory[self.cur_pos] = (state, action, reward, next_state, done)
+            id_ = self.priorities.argmin()
+            self.memory[id_] = (state, action, reward, next_state, done)
         else:
             self.memory.append((state, action, reward, next_state, done))
+            self.priorities[self.cur_pos] = priority
+            self.cur_pos += 1
         
-        self.priorities[self.cur_pos] = priority
-        # move to the next
-        self.cur_pos = (self.cur_pos + 1) % self.capacity
-        
-
 
     def sample(self, batch_size, beta=0.5):
         probs = self.priorities[:self.get_len()] ** self.alpha
@@ -185,9 +183,9 @@ def train():
             steps_log.append(num_steps)
             episodes_ids.append(i_episode)
 
-        if i_episode % 100 == 0:
-            target_model.save_weights('tf_target_per.h5')
-            save_steps_log({"episodes_ids": episodes_ids, "num_steps" : steps_log})
+        # if i_episode % 100 == 0:
+        #     target_model.save_weights('tf_target_per.h5')
+        #     save_steps_log({"episodes_ids": episodes_ids, "num_steps" : steps_log})
 
     env.close()
 
