@@ -140,7 +140,7 @@ def train():
             episodes_ids.append(i_episode)
 
         if i_episode % 100 == 0:
-            target_model.save_weights('tf_target_dqn_new.h5')
+            target_model.save_weights('tf_target_ddqn.h5')
             save_steps_log({"episodes_ids": episodes_ids, "num_steps" : steps_log})
 
     env.close()
@@ -157,7 +157,7 @@ def play(epoch=10, audio_on=True, render_mode=None, use_lidar=False):
     target_net = DQN(state_dim, action_dim)
     dummy_input = np.random.random((1, state_dim))
     target_net(dummy_input)
-    target_net.load_weights('tf_target_dqn_new.h5')
+    target_net.load_weights('tf_target_ddqn.h5')
 
     for i in range(epoch):
         state, _ = env.reset()

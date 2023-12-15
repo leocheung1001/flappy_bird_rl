@@ -315,7 +315,7 @@ class FlappyBirdLogic:
 
         # agent touch the top of the screen as punishment
         if self.player_y < 0:
-            reward = -100000
+            reward = -10000000
             terminal = True
             self.player_vel_y = 0
 
@@ -335,7 +335,7 @@ class FlappyBirdLogic:
         # check for crash
         if self.check_crash():
             self.sound_cache = "hit"
-            reward = -100000  # reward for dying
+            reward = -10000000  # reward for dying
             terminal = True
             self.player_vel_y = 0
 

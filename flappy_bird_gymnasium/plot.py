@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pygame
 import jsonschema
-
+import json
 import flappy_bird_gymnasium
 
 def read_json():
@@ -12,14 +12,14 @@ def read_json():
     # Read and parse the JSON data
         data = json.load(file)
         
-    return data["log"]
+    return data["episodes_ids"], data["num_steps"]
 
 
 
 if __name__ == "__main__":
-    steps = read_json()
-    nums = list(range(len(steps)))
-    plt.plot(nums, steps)
+    episodes, steps = read_json()
+    # nums = list(range(len(steps)))
+    plt.plot(episodes, steps)
 
     # Adding title
     plt.title('Training episodes v.s. Survival time')
