@@ -37,9 +37,9 @@ observations or RGB-arrays (images) representing the game's screen.
 
 ## Rewards
 
-* +0.1 - **every frame it stays alive**
-* +1.0 - **successfully passing a pipe**
-* -1.0 - **dying**
+* +1 - **every frame it stays alive**
+* +100 - **successfully passing a pipe**
+* -100,0000- **dying**
 
 <br>
 
@@ -92,6 +92,11 @@ To see a random agent playing, add an argument to the command:
 
     $ flappy_bird_gymnasium --mode random
 
-To see a Deep Q Network agent playing, add an argument to the command:
+To test the algorithms for CS184 project, you can run:
 
-    $ flappy_bird_gymnasium --mode dqn
+    $  python flappy_bird_gymnasium/my_priority.py
+    $  python flappy_bird_gymnasium/my_dqn.py
+    $  python flappy_bird_gymnasium/my_dueling_dqn.py
+
+
+
