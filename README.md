@@ -92,11 +92,13 @@ To see a random agent playing, add an argument to the command:
 
     $ flappy_bird_gymnasium --mode random
 
-To test the algorithms for CS184 project, you can run:
+To test the DQN related algorithms for CS184 project, you can run:
 
-    $  python flappy_bird_gymnasium/my_priority.py
+    $  python flappy_bird_gymnasium/my_priority.py -t
     $  python flappy_bird_gymnasium/my_dqn.py
-    $  python flappy_bird_gymnasium/my_dueling_dqn.py
+    $  python flappy_bird_gymnasium/my_dueling_dqn.py -t
 
+For the policy gradient related methods for our project, please refer to this [link](https://github.com/JerryGao9527/Flappy-Bird-Gameplay-with-RL)
+(https://github.com/JerryGao9527/Flappy-Bird-Gameplay-with-RL).
 
 

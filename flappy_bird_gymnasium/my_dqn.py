@@ -183,5 +183,5 @@ def play(epoch=10, audio_on=True, render_mode=None, use_lidar=False):
     env.close()
 
 if __name__ == "__main__":
-    play()
-    # train()
+    # play()
+    train()
